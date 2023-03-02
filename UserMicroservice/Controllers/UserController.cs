@@ -57,7 +57,7 @@ public class UserController : ControllerBase
     }
     
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> PutUser(int id, [FromBody] UpdateUserRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Put(int id, [FromBody] UpdateUserRequest request, CancellationToken cancellationToken)
     {
         var user = await _userService.GetUserAsync(id, cancellationToken);
 
@@ -74,7 +74,7 @@ public class UserController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    public async Task<IActionResult> DeleteUser(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         var user = await _userService.GetUserAsync(id, cancellationToken);
 
@@ -86,6 +86,16 @@ public class UserController : ControllerBase
         await _userService.DeleteUserAsync(user.Id, cancellationToken);
 
         return Ok();
+    }
+    
+    [HttpGet("subscriptionTypes")]
+    public async Task<IActionResult> GetSubscriptionTypes(
+        [FromBody] GetSubscriptionTypesRequest request, CancellationToken cancellationToken)
+    {
+        var subscriptionTypes = await _userService.GetSubscriptionTypesAsync(request.UserIds, cancellationToken);
+        var response = new GetSubscriptionTypesResponse {SubscriptionTypes = subscriptionTypes};
+        
+        return Ok(response);
     }
 
 }

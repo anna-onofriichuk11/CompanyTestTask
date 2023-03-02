@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ProjectMicroservice.Data;
 using ProjectMicroservice.Entities;
+using ProjectMicroservice.Services.Interfaces;
 
 namespace ProjectMicroservice.Controllers;
 
@@ -8,38 +9,30 @@ namespace ProjectMicroservice.Controllers;
 [Route("api/[controller]")]
 public class ProjectController : ControllerBase
 {
-    private readonly ProjectContext _context;
+    private readonly IProjectService _projectService;
 
-    public ProjectController(ProjectContext context)
+    public ProjectController(IProjectService projectService)
     {
-        _context = context;
+        _projectService = projectService ?? throw new ArgumentNullException(nameof(projectService));
     }
 
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<Project>>> GetProjects()
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] Project project, CancellationToken cancellationToken)
     {
-        return await _context.Projects.ToListAsync();
+        await _projectService.AddProjectAsync(project, cancellationToken);
+        return Ok(new {project.Id});
     }
 
-    [HttpGet("{id:length(24)}", Name = "GetProject")]
-    public async Task<ActionResult<Project>> GetProject(string id)
+    [HttpGet("byUserId/{userId:int}")]
+    public async Task<IActionResult> GetProjectByUserId(int userId, CancellationToken cancellationToken)
     {
-        var project = await _context.Projects.Find(p => p.Id == id).FirstOrDefaultAsync();
+        var result = await _projectService.GetProjectsByUserIdAsync(userId, cancellationToken);
 
-        if (project == null)
+        if (result == null || result.Count == 0)
         {
             return NotFound();
         }
 
-        return project;
+        return Ok(result);
     }
-
-    [HttpPost]
-    public async Task<ActionResult<Project>> PostProject(Project project)
-    {
-        await _context.Projects.InsertOneAsync(project);
-
-        return CreatedAtRoute("GetProject", new {id = project.Id.ToString()}, project);
-    }
-
 }

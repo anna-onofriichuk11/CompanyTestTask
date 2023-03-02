@@ -62,15 +62,16 @@ public class UserService : IUserService
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<string> GetSubscriptionType(int userId, CancellationToken cancellationToken)
+    public async Task<IList<string>> GetSubscriptionTypesAsync(IList<int> userIds, CancellationToken cancellationToken)
     {
-        var user = await _dbContext.Users.FindAsync(userId);
-        if (user == null)
-        {
-            throw new ArgumentException($"User with id {userId} not found.", nameof(userId));
-        }
+        var query = _dbContext.Users
+            .Where(u => userIds.Contains(u.Id))
+            .OrderBy(u => u.Id)
+            .Select(u => u.Subscription.Type);
 
-        var subscription = await _dbContext.Subscriptions.FindAsync(user.SubscriptionId);
-        return subscription?.Type;
+        var subscriptionTypes = await query.ToListAsync(cancellationToken);
+
+        return subscriptionTypes;
     }
+
 }
